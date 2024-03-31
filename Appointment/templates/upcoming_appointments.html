@@ -1,0 +1,123 @@
+<!-- upcoming_appointments.html -->
+
+{% extends "blog/base.html" %}
+
+{% block content %}
+{% block Script %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const table = document.getElementById('appointment-table');
+  const headers = table.querySelectorAll('thead th');
+
+  headers.forEach(function(header, index) {
+    header.addEventListener('click', function() {
+      sortTable(index);
+    });
+  });
+
+  function sortTable(column) {
+    const rows = Array.from(table.querySelectorAll('tbody tr'));
+    const isNumeric = !isNaN(parseFloat(rows[0].querySelectorAll('td')[column].innerText));
+
+    rows.sort(function(rowA, rowB) {
+      const cellA = rowA.querySelectorAll('td')[column].innerText;
+      const cellB = rowB.querySelectorAll('td')[column].innerText;
+
+      if (isNumeric) {
+        return parseFloat(cellA) - parseFloat(cellB);
+      } else {
+        return cellA.localeCompare(cellB);
+      }
+    });
+
+    rows.forEach(function(row) {
+      table.querySelector('tbody').appendChild(row);
+    });
+  }
+});
+</script>
+{% endblock %}
+<style>
+    /* CSS */
+.appointment-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.appointment-table th,
+.appointment-table td {
+  padding: 8px;
+  text-align: left;
+}
+
+.appointment-table th {
+  background-color: #f2f2f2;
+}
+
+.appointment-table tr.odd {
+  background-color: #f9f9f9;
+}
+
+.appointment-table tr.even {
+  background-color: #ffffff;
+}
+
+.status {
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.accepted {
+  background-color: #28a745;
+  color: #ffffff;
+}
+
+.pending {
+  background-color: #ffc107;
+  color: #000000;
+}
+
+.rejected {
+  background-color: #dc3545;
+  color: #ffffff;
+}
+h2 {
+ display: block; /* Set display to block */
+    }
+</style>
+
+<h2 style="margin-right: 20px;">Upcoming Appointments</h2>
+{% if upcoming_appointments %}
+  <div class="table-responsive">
+    <table class="table appointment-table" id="appointment-table ">
+      <thead>
+        <tr>
+          <th><a href="#" class="sort" data-column="timestamp">time request</a></th>
+          <th><a href="#" class="sort" data-column="patient">Patient</a></th>
+          <th><a href="#" class="sort" data-column="date_time_available">Date and Time Needed</a></th>
+          <th><a href="#" class="sort" data-column="services_needed">Services Needed</a></th>
+          <th><a href="#" class="sort" data-column="location">Location</a></th>
+          <th><a href="#" class="sort" data-column="note">Note</a></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for appointment in upcoming_appointments %}
+          <tr class="{% cycle 'odd' 'even' %}">
+            <td style="color:gray ;font-size: xx-small; font-style: italic;"> {{ appointment.timestamp}}</td>
+            <td><a href="{% url 'public-profile' appointment.patient.username %}">{{ appointment.patient.username }}</a></td>
+            <td>{{ appointment.date_time }}</td>
+            <td>{{ appointment.services_needed}}</td>
+            <td>{{ appointment.location }}</td>
+            <td style="color: grey;">{{ appointment.note}}</td>
+
+            
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <p>No upcoming appointments.</p>
+{% endif %}
+
+{% endblock %}

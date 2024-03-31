@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Geolocation</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.8.0/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+    }
+  </style>
+
+</head>
+
+<body>
+  <div id="map" style="width:100%; height: 100vh"></div>
+  <script src="https://unpkg.com/leaflet@1.8.0/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+
+
+  <script>
+    function getLocation() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(showPosition, showError);
+      } else {
+        alert("Geolocation is not supported by this browser.");
+      }
+    }
+
+    function showPosition(position) {
+      var userLatitude = position.coords.latitude;
+      var userLongitude = position.coords.longitude;
+
+      var map = L.map('map').setView([userLatitude, userLongitude], 14);
+      mapLink = "<a href='http://openstreetmap.org'>OpenStreetMap</a>";
+      L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', { attribution: 'Leaflet &copy; ' + mapLink + ', contribution', maxZoom: 18 }).addTo(map);
+
+      var taxiIcon = L.icon({
+        iconUrl: 'img/nurse.png',
+        iconSize: [40, 70]
+      });
+
+      var userMarker = L.marker([userLatitude, userLongitude], { icon: taxiIcon }).addTo(map).bindPopup("Your Location");
+
+      // Replace with your desired target location
+      var target = L.latLng(33.82861019915863, 35.51244391117204); // Example target coordinates
+
+      var waypoints = [
+        userMarker.getLatLng(),
+        target
+      ];
+
+      var routingControl = L.Routing.control({
+        waypoints: waypoints
+      }).addTo(map);
+
+      routingControl.on('routesfound', function (e) {
+        var routes = e.routes;
+        // You can process the routes here (optional)
+      });
+    }
+
+    function showError(error) {
+      switch (error.code) {
+        case error.PERMISSION_DENIED:
+          alert("User denied the request for Geolocation.");
+          break;
+        case error.POSITION_UNAVAILABLE:
+          alert("Location information is unavailable.");
+          break;
+        case error.TIMEOUT:
+          alert("The request to get user location timed out.");
+          break;
+        case error.UNKNOWN_ERROR:
+          alert("An unknown error occurred.");
+          break;
+      }
+    }
+
+    getLocation();
+  </script>
+
+
+</body>
+
+</html>

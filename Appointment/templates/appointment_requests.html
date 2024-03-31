@@ -1,0 +1,139 @@
+{% extends "blog/base.html" %}
+
+{% block content %}
+{% block Script %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const table = document.getElementById('appointment-requests-table');
+  const headers = table.querySelectorAll('thead th');
+
+  headers.forEach(function(header, index) {
+    header.addEventListener('click', function() {
+      sortTable(index);
+    });
+  });
+
+  function sortTable(column) {
+    const rows = Array.from(table.querySelectorAll('tbody tr'));
+    const isNumeric = !isNaN(parseFloat(rows[0].querySelectorAll('td')[column].innerText));
+
+    rows.sort(function(rowA, rowB) {
+      const cellA = rowA.querySelectorAll('td')[column].innerText;
+      const cellB = rowB.querySelectorAll('td')[column].innerText;
+
+      if (isNumeric) {
+        return parseFloat(cellA) - parseFloat(cellB);
+      } else {
+        return cellA.localeCompare(cellB);
+      }
+    });
+
+    rows.forEach(function(row) {
+      table.querySelector('tbody').appendChild(row);
+    });
+  }
+});
+</script>
+{% endblock %}
+<style>
+  /* CSS styles for table */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  th, td {
+    padding: 8px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+  }
+
+  th {
+    background-color: #f2f2f2;
+  }
+
+  tr:nth-child(even) {
+    background-color: #f2f2f2;
+  }
+
+  tr:hover {
+    background-color: #ddd;
+  }
+
+  .action-buttons {
+    display: flex;
+    gap: 5px;
+  }
+
+  button {
+    padding: 6px 12px;
+    border: 1px solid #ccc;
+    cursor: pointer;
+  }
+
+  .accept-button {
+    background-color: #4CAF50;
+    color: white;
+  }
+
+  .accept-button:hover {
+    background-color: #45a049;
+  }
+
+  .decline-button {
+    background-color: #f44336;
+    color: white;
+  }
+
+  .decline-button:hover {
+    background-color: #db4330;
+  }
+</style>
+
+<h2>Appointment Requests</h2>
+
+
+{% if appointment_requests %}
+<div class="table-responsive">
+  <table class="table appointment-table" id="appointment-requests-table">
+    <thead>
+      <tr>
+        <th><a href="#" class="sort" data-column="timestamp">Timestamp</a></th>
+        <th><a href="#" class="sort" data-column="sender">Sender</a></th>
+        <th><a href="#" class="sort" data-column="date_time_available">Date and Time</a></th>
+        <th><a href="#" class="sort" data-column="services_needed">Services Needed</a></th>
+        <th><a href="#" class="sort" data-column="location">Location</a></th>
+        <th><a href="#" class="sort" data-column="note">Note</a></th>
+        <th><a href="#" class="sort" data-column="actions">Actions</a></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for appointment_request in appointment_requests %}
+      <tr>
+        <td style="color:gray ;font-size: xx-small; font-style: italic;">{{ appointment_request.timestamp }}</td>
+        <td><a href="{% url 'public-profile' appointment_request.sender.username %}">{{ appointment_request.sender.username }}</a></td>
+        <td>{{ appointment_request.date_time_available }}</td>
+        <td>{{ appointment_request.services_needed }}</td>
+        <td>{{ appointment_request.location }}</td>
+        <td style="color: grey;">{{ appointment_request.note }}</td>
+        <td class="action-buttons">
+          <form action="{% url 'accept_appointment_request' appointment_request.id %}" method="POST">
+            {% csrf_token %}
+            <button type="submit" class="accept-button">Accept</button>
+          </form>
+          <form action="{% url 'decline_appointment_request' appointment_request.id %}" method="POST">
+            {% csrf_token %}
+            <button type="submit" class="decline-button">Decline</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<p>No appointment requests.</p>
+{% endif %}
+{% endblock %}
+
+

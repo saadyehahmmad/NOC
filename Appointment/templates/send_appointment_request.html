@@ -1,0 +1,143 @@
+<!-- send_appointment_request.html -->
+{% extends "blog/base.html" %}
+{% load static %}
+{% block content %}
+<style>
+  .reservation_img {
+    position: fixed;
+    display: flex;
+    top: 12%; /* Adjust as needed */
+    left: 0;
+    scale:0 auto;
+    transform: translateX(
+      1000px);
+    
+    
+    z-index: 9999; /* Adjust as needed to ensure it's above other elements */
+}
+
+/* Optional styles to limit the image width */
+.reservation_img img {
+    max-width: 100%; /* Ensure the image doesn't overflow horizontally */
+}
+</style>
+<section class="regervation_part section_padding">
+    <div class="container">
+      <div class="row align-items-center regervation_content">
+        <div class="col-lg-7">
+          <div class="regervation_part_iner">
+            <form method="POST" id="appointment-request-form">
+              {% csrf_token %}
+              <h2>Make an Appointment</h2>
+              <div class="form-row">
+                <div class="form-group col-md-6">
+                  <label for="receiver">Receiver:</label>
+                  <select class="form-control" id="receiver" name="receiver" required>
+                    {% for user in form.receiver.field.queryset %}
+                        <option value="{{ user.id }}">{{ user.username }}</option>
+                    {% endfor %}
+                </select>
+                
+                </div>
+               
+                <div class="form-group col-md-6">
+                  <label for="services_needed">Services Needed:</label>
+                  <input type="text" class="form-control" id="services_needed" name="services_needed" placeholder="Enter services needed" required>
+                </div>
+                <div class="form-group time_icon col-md-6">
+                  <label for="date_time_available">Date and Time Available:</label>
+                  <input type="datetime-local" class="form-control" id="date_time_available" name="date_time_available" required>
+                </div>
+                <div class="form-group time_icon col-md-6" style="padding-top: 22px;">
+                  <button type="button" id="get-location-btn" class="btn btn-sm btn-info mt-2">Get Current Location</button>
+                </div>
+                <div class="form-group col-md-12">
+                  <label for="location">Location:</label>
+
+                  <div id="map-container" style="margin-right: 20px;">
+                      <iframe 
+                          id="map-frame"
+                          width="100%" 
+                          height="300" 
+                          frameborder="0" 
+                          scrolling="no" 
+                          loading="lazy"
+                          allowfullscreen
+                          referrerpolicy="no-referrer-when-downgrade"
+                          marginheight="0" 
+                          marginwidth="20px" 
+                          src=""
+                      ></iframe>
+                      <br />
+                  </div>
+                  <input type="text" class="form-control" id="location" name="location" placeholder="Press Get Currrent Location Above" required readonly >
+              </div>
+                <div class="form-group col-md-12">
+                  <label for="note">Additional Description:</label>
+                  <textarea class="form-control" id="note" name="note" rows="4" placeholder="Enter your note"></textarea>
+                </div>
+              </div>
+              <button type="submit" class="btn" style="color:whitesmoke;background-color: rgb(146, 146, 0);border-radius:5px;">Make an Appointment</button>
+             <a  href="{% url 'send_Emergency_request' %}"> <button type="button" class="btn" style="color:whitesmoke;background-color: rgb(255, 57, 57);border-radius:5px;">Emergency!</button>
+             </a></form>
+            {% if appointment_pending %}
+            <p>Your reservation is pending. Please wait for the nurse to accept or reject it.</p>
+            {% endif %}
+          </div>
+        </div>
+        <div class="col-lg-5 col-md-6">
+          <div class="reservation_img">
+            <img src="{% static 'blog/images/reservation.png' %}" alt=""  class="reservation_img_iner">
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+{% block scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const getLocationBtn = document.getElementById('get-location-btn');
+    getLocationBtn.addEventListener('click', function() {
+        getLocation();
+    });
+});
+
+function getLocation() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(showPosition, showError);
+    } else {
+        alert("Geolocation is not supported by this browser.");
+    }
+}
+
+function showPosition(position) {
+    const latitude = position.coords.latitude;
+    const longitude = position.coords.longitude;
+    const locationInput = document.getElementById('location');
+    locationInput.value = `${latitude}, ${longitude}`;
+    
+    // Update the map iframe src
+    const mapFrame = document.getElementById('map-frame');
+    const mapSrc = `https://maps.google.com/maps?q=${latitude},${longitude}&hl=ar&z=15&output=embed`;
+    mapFrame.src = mapSrc;
+}
+
+function showError(error) {
+    switch(error.code) {
+        case error.PERMISSION_DENIED:
+            alert("User denied the request for Geolocation.");
+            break;
+        case error.POSITION_UNAVAILABLE:
+            alert("Location information is unavailable.");
+            break;
+        case error.TIMEOUT:
+            alert("The request to get user location timed out.");
+            break;
+        case error.UNKNOWN_ERROR:
+            alert("An unknown error occurred.");
+            break;
+    }
+}
+</script>
+{% endblock %}
+{% endblock %}

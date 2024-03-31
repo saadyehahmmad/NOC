@@ -1,0 +1,276 @@
+{% extends "blog/base.html" %}
+{% load static %}
+{% block content %}
+{% block Script %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const toggleSwitch = document.getElementById('emergency-toggle');
+    const locationInput = document.getElementById('location');
+  
+    // Retrieve the state from local storage on page load
+    const emergencyToggleState = localStorage.getItem('emergencyToggleState');
+    if (emergencyToggleState === 'on') {
+      toggleSwitch.checked = true;
+      getLocation(); // If toggle is on, get location
+    }
+  
+    toggleSwitch.addEventListener('change', function() {
+      if (this.checked) {
+        getLocation();
+        updateProfileStatus(true); // Update profile status to true
+        // Save the state to local storage when the toggle is switched on
+        localStorage.setItem('emergencyToggleState', 'on');
+      } else {
+        locationInput.value = ''; // Clear location if toggle is off
+        updateProfileStatus(false); // Update profile status to false
+        // Save the state to local storage when the toggle is switched off
+        localStorage.setItem('emergencyToggleState', 'off');
+      }
+    });
+  
+    function getLocation() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+          const latitude = position.coords.latitude;
+          const longitude = position.coords.longitude;
+          locationInput.value = `${latitude}, ${longitude}`;
+          // Send AJAX request only after location is retrieved
+          updateProfileStatus(toggleSwitch.checked);
+        }, function(error) {
+          console.error('Error getting location:', error);
+        });
+      } else {
+        alert('Geolocation is not supported by this browser.');
+      }
+    }
+  
+    function updateProfileStatus(status) {
+      // Send AJAX request to update profile status
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', '{% url "update_profile_status" %}', true);
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      // Include CSRF token in headers
+      xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
+          console.log('Profile status updated successfully');
+        }
+      };
+      xhr.send(JSON.stringify({ status: status, location: locationInput.value }));
+    }
+  
+    // Function to get CSRF token from cookies
+    function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          if (cookie.substring(0, name.length + 1) === (name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
+    }
+  });
+  </script>
+  
+  
+{% endblock %}
+
+<style>
+  /* CSS styles for table */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  th, td {
+    padding: 8px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+  }
+
+  th {
+    background-color: #f2f2f2;
+  }
+
+  tr:nth-child(even) {
+    background-color: #f2f2f2;
+  }
+
+  tr:hover {
+    background-color: #ddd;
+  }
+
+  .action-buttons {
+    display: flex;
+    gap: 5px;
+  }
+
+  button {
+    padding: 6px 12px;
+    border: 1px solid #ccc;
+    cursor: pointer;
+  }
+
+  .accept-button {
+    background-color: #4CAF50;
+    color: white;
+  }
+
+  .accept-button:hover {
+    background-color: #45a049;
+  }
+
+  .decline-button {
+    background-color: #f44336;
+    color: white;
+  }
+
+  .decline-button:hover {
+    background-color: #db4330;
+  }
+
+  /* CSS styles for toggle switch */
+  .toggle-switch {
+    position: relative;
+    display:block;
+    width: 200px;
+    height: 100px;
+    margin-left:400px ;
+  }
+
+  .toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  .toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 60px;
+  }
+
+  .toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 60px;
+    width: 60px;
+    left: 10px;
+    bottom: 20px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+  }
+
+  input:checked + .toggle-slider {
+    background-color: #2196F3;
+  }
+
+  input:focus + .toggle-slider {
+    box-shadow: 0 0 1px #2196F3;
+  }
+
+  input:checked + .toggle-slider:before {
+    transform: translateX(120px);
+  }
+
+  /* Other styles */
+  .toggle-label {
+    position: absolute;
+    display: block;
+    font-size: 30px;
+    float: left;
+    margin-top: 16px;
+    z-index: 999;
+
+  }
+  .locationread{
+    font-size: 18px;
+    border-radius: 20px;
+    margin-top: -26px;
+  }
+</style>
+<div class="container">
+  <div class="row align-items-center regervation_content">
+    <div class="col-lg-12 ">
+      <div class="regervation_part_iner">
+        <label class="toggle-label" for="emergency-toggle">Available for Emergencies:</label>
+
+      </div>
+      <form method="POST" id="Emergency-available-form">
+        {% csrf_token %}
+
+        <div class="toggle-switch ">
+          <label class="switch">
+            <input type="checkbox" id="emergency-toggle" name="emergency_toggle_state">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </form>
+      <div class="col-md-4">
+        <input type="text" class="form-control locationread" id="location" name="location" placeholder="" readonly>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- Toggle switch -->
+<div class="col-md-8">
+<h2>Emergency Requests</h2>
+</div>
+
+{% if Emergency_requests %}
+<div class="table-responsive">
+  <table class="table Emergency-table" id="Emergency-requests-table">
+    <thead>
+      <tr>
+        <th><a href="#" class="sort" data-column="timestamp">Timestamp</a></th>
+        <th><a href="#" class="sort" data-column="sender">Sender</a></th>
+        <th><a href="#" class="sort" data-column="location">Location</a></th>
+        <th><a href="#" class="sort" data-column="distance">Distacne</a></th>
+        <th><a href="#" class="sort" data-column="note">Note</a></th>
+        <th><a href="#" class="sort" data-column="actions">Actions</a></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for Emergency_request in Emergency_requests %}
+      <tr>
+        <td style="color:gray ;font-size: xx-small; font-style: italic;">{{ Emergency_request.timestamp }}</td>
+        <td><a href="{% url 'public-profile' Emergency_request.sender.username %}">{{ Emergency_request.sender.username }}</a></td>
+        <td>{{ Emergency_request.location }}</td>
+        <td>{{ Emergency_request.distance }} Km</td>
+        <td style="color: grey;">{{ Emergency_request.note }}</td>
+        <td class="action-buttons">
+          <form action="{% url 'accept_Emergency_request' Emergency_request.id %}" method="POST">
+            {% csrf_token %}
+            <button type="submit" class="accept-button">Accept</button>
+          </form>
+          <form action="{% url 'decline_Emergency_request' Emergency_request.id %}" method="POST">
+            {% csrf_token %}
+            <button type="submit" class="decline-button">Decline</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="col-md-8">
+  <p>No Emergency requests.</p>
+</div></div>
+{% endif %}
+{% endblock %}
+
+
